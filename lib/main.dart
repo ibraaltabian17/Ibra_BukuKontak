@@ -150,8 +150,13 @@ class _MyHomePageState extends State<MyHomePage> {
           daftarKontak(),
 
           // TAB FAVORIT
-          const Center(
-            child: Text('Belum ada kontak favorit'),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Dhani Arrgiawan Widiyatmoko'),
+            subtitle: const Text(
+              'dhani@gmail.com\n'
+              '0812345678901',
+            ),
           ),
         ],
       ),
