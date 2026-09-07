@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -34,6 +35,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   // Menyimpan data kontak
   List<Kontak> items = [];
+
+  // StreamController untuk pencarian real-time
+  final StreamController<String> _searchController =
+      StreamController<String>.broadcast();
+
+  @override
+  void dispose() {
+    _searchController.close();
+    super.dispose();
+  }
 
   // FUNGSI UNTUK MEMBUKA HALAMAN TAMBAH KONTAK
   Future<void> tambahKontak() async {
@@ -173,36 +184,84 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // WIDGET DAFTAR KONTAK
   Widget daftarKontak() {
-    if (items.isEmpty) {
-      return const Center(
-        child: Text(
-          'Belum ada kontak',
-          style: TextStyle(fontSize: 16),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: CircleAvatar(
-            child: Text(
-              items[index].nama.isNotEmpty
-                  ? items[index].nama[0].toUpperCase()
-                  : '',
+    return Column(
+      children: [
+        // TEXTFIELD PENCARIAN
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: TextField(
+            decoration: const InputDecoration(
+              labelText: 'Cari Kontak',
+              hintText: 'Cari berdasarkan nama atau kategori...',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
             ),
+            onChanged: (teks) {
+              _searchController.add(teks);
+            },
           ),
-          title: Text(
-            items[index].nama,
+        ),
+
+        // STREAM BUILDER UNTUK DAFTAR KONTAK REAL-TIME
+        Expanded(
+          child: StreamBuilder<String>(
+            stream: _searchController.stream,
+            initialData: '',
+            builder: (context, snapshot) {
+              final query = (snapshot.data ?? '').toLowerCase();
+
+              // Filter kontak berdasarkan nama ATAU kategori
+              final filteredList = items.where((kontak) {
+                final namaMatch = kontak.nama.toLowerCase().contains(query);
+                final kategoriMatch =
+                    (kontak.kategori ?? '').toLowerCase().contains(query);
+                return namaMatch || kategoriMatch;
+              }).toList();
+
+              if (items.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Belum ada kontak',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
+              }
+
+              if (filteredList.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Kontak tidak ditemukan',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: filteredList.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: CircleAvatar(
+                      child: Text(
+                        filteredList[index].nama.isNotEmpty
+                            ? filteredList[index].nama[0].toUpperCase()
+                            : '',
+                      ),
+                    ),
+                    title: Text(
+                      filteredList[index].nama,
+                    ),
+                    subtitle: Text(
+                      '${filteredList[index].email}\n'
+                      '${filteredList[index].noHandphone}\n'
+                      '${filteredList[index].kategori ?? 'Tanpa kategori'}',
+                    ),
+                  );
+                },
+              );
+            },
           ),
-          subtitle: Text(
-            '${items[index].email}\n'
-            '${items[index].noHandphone}\n'
-            '${items[index].kategori ?? 'Tanpa kategori'}',
-          ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
