@@ -216,6 +216,8 @@ class TambahKontakPage extends StatefulWidget {
 }
 
 class _TambahKontakPageState extends State<TambahKontakPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   // Controller untuk mengambil input
   final TextEditingController namaController = TextEditingController();
 
@@ -260,57 +262,89 @@ class _TambahKontakPageState extends State<TambahKontakPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            // NAMA
-            TextField(
-              controller: namaController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Lengkap',
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // NAMA
+              TextFormField(
+                controller: namaController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Nama wajib diisi';
+                  }
+                  return null;
+                },
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            // EMAIL
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+              // EMAIL
+              TextFormField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email wajib diisi';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Email wajib mengandung karakter @';
+                  }
+                  return null;
+                },
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            // NOMOR HANDPHONE
-            TextField(
-              controller: noHandphoneController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'No Handphone',
+              // NOMOR HANDPHONE
+              TextFormField(
+                controller: noHandphoneController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'No Handphone',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'No Handphone wajib diisi';
+                  }
+                  if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                    return 'No Handphone hanya boleh angka';
+                  }
+                  if (value.length < 10) {
+                    return 'No Handphone minimal 10 digit';
+                  }
+                  return null;
+                },
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            // KATEGORI
-            TextField(
-              controller: kategoriController,
-              decoration: const InputDecoration(
-                labelText: 'Kategori (contoh: Keluarga, Teman, Kerja)',
+              // KATEGORI
+              TextField(
+                controller: kategoriController,
+                decoration: const InputDecoration(
+                  labelText: 'Kategori (contoh: Keluarga, Teman, Kerja)',
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // TOMBOL SIMPAN
-            ElevatedButton(
-              onPressed: () {
-                simpanKontak();
-              },
-              child: const Text('Simpan'),
-            ),
-          ],
+              // TOMBOL SIMPAN
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    simpanKontak();
+                  }
+                },
+                child: const Text('Simpan'),
+              ),
+            ],
+          ),
         ),
       ),
     );
