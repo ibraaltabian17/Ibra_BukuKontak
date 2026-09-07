@@ -198,7 +198,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           subtitle: Text(
             '${items[index].email}\n'
-            '${items[index].noHandphone}',
+            '${items[index].noHandphone}\n'
+            '${items[index].kategori ?? 'Tanpa kategori'}',
           ),
         );
       },
@@ -222,11 +223,14 @@ class _TambahKontakPageState extends State<TambahKontakPage> {
 
   final TextEditingController noHandphoneController = TextEditingController();
 
+  final TextEditingController kategoriController = TextEditingController();
+
   @override
   void dispose() {
     namaController.dispose();
     emailController.dispose();
     noHandphoneController.dispose();
+    kategoriController.dispose();
     super.dispose();
   }
 
@@ -237,6 +241,9 @@ class _TambahKontakPageState extends State<TambahKontakPage> {
       nama: namaController.text,
       email: emailController.text,
       noHandphone: noHandphoneController.text,
+      kategori: kategoriController.text.trim().isEmpty
+          ? null
+          : kategoriController.text.trim(),
     );
 
     // Mengirim data kontak kembali ke halaman sebelumnya
@@ -281,6 +288,16 @@ class _TambahKontakPageState extends State<TambahKontakPage> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'No Handphone',
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            // KATEGORI
+            TextField(
+              controller: kategoriController,
+              decoration: const InputDecoration(
+                labelText: 'Kategori (contoh: Keluarga, Teman, Kerja)',
               ),
             ),
 
@@ -351,10 +368,12 @@ class Kontak {
   String nama;
   String email;
   String noHandphone;
+  String? kategori;
 
   Kontak({
     required this.nama,
     required this.email,
     required this.noHandphone,
+    this.kategori,
   });
 }
