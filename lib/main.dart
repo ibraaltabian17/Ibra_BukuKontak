@@ -186,7 +186,13 @@ class _MyHomePageState extends State<MyHomePage> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         return ListTile(
-          leading: const Icon(Icons.person),
+          leading: CircleAvatar(
+            child: Text(
+              items[index].nama.isNotEmpty
+                  ? items[index].nama[0].toUpperCase()
+                  : '',
+            ),
+          ),
           title: Text(
             items[index].nama,
           ),
