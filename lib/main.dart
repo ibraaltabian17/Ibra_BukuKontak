@@ -37,18 +37,21 @@ class _MyHomePageState extends State<MyHomePage> {
   // Menyimpan data kontak awal untuk pengujian
   List<Kontak> items = [
     Kontak(
+      id: 'kontak_1',
       nama: 'Budi Santoso',
       email: 'budi@gmail.com',
       noHandphone: '081234567890',
       kategori: 'Teman',
     ),
     Kontak(
+      id: 'kontak_2',
       nama: 'Annisa Rahma',
       email: 'annisa@gmail.com',
       noHandphone: '089876543210',
       kategori: 'Keluarga',
     ),
     Kontak(
+      id: 'kontak_3',
       nama: 'Citra Dewi',
       email: 'citra@gmail.com',
       noHandphone: '082134567891',
@@ -785,6 +788,7 @@ class TentangPage extends StatelessWidget {
 
 // CLASS KONTAK
 class Kontak {
+  static int _counter = 100;
   final String id;
   String nama;
   String email;
@@ -797,5 +801,6 @@ class Kontak {
     required this.email,
     required this.noHandphone,
     this.kategori,
-  }) : id = id ?? DateTime.now().microsecondsSinceEpoch.toString();
+  }) : id = id ??
+            'kontak_${++_counter}_${DateTime.now().microsecondsSinceEpoch}';
 }

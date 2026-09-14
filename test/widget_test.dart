@@ -72,8 +72,10 @@ void main() {
     await tester.tap(find.text('Hapus'));
     await tester.pumpAndSettle();
 
-    // Kontak telah terhapus
+    // Kontak Budi telah terhapus, tetapi Annisa dan Citra tetap ada
     expect(find.text('Budi Santoso'), findsNothing);
+    expect(find.text('Annisa Rahma'), findsOneWidget);
+    expect(find.text('Citra Dewi'), findsOneWidget);
   });
 
   testWidgets('Pengujian Pencarian dan Edit/Delete pada hasil pencarian',
