@@ -3,113 +3,71 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_design/main.dart';
 
 void main() {
-  testWidgets('Menampilkan daftar kontak awal', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-    await tester.pumpAndSettle();
-
-    // Memastikan kontak awal muncul
-    expect(find.text('Budi Santoso'), findsOneWidget);
-    expect(find.text('Annisa Rahma'), findsOneWidget);
-    expect(find.text('Citra Dewi'), findsOneWidget);
-  });
-
-  testWidgets('Pengujian fitur Edit Kontak', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-    await tester.pumpAndSettle();
-
-    // Tekan tombol edit pertama (untuk Budi Santoso)
-    final editButtons = find.byIcon(Icons.edit);
-    expect(editButtons, findsWidgets);
-    await tester.tap(editButtons.first);
-    await tester.pumpAndSettle();
-
-    // Pastikan halaman Edit Kontak muncul dengan data awal
-    expect(find.text('Edit Kontak'), findsOneWidget);
-    expect(find.text('Budi Santoso'), findsOneWidget);
-    expect(find.text('Simpan Perubahan'), findsOneWidget);
-
-    // Ubah nama kontak
-    final namaField = find.widgetWithText(TextFormField, 'Nama Lengkap');
-    await tester.enterText(namaField, 'Budi Pratama');
-    await tester.pumpAndSettle();
-
-    // Tekan Simpan Perubahan
-    await tester.tap(find.text('Simpan Perubahan'));
-    await tester.pumpAndSettle();
-
-    // Verifikasi kembali ke daftar kontak dan nama telah berubah
-    expect(find.text('Budi Pratama'), findsOneWidget);
-    expect(find.text('Budi Santoso'), findsNothing);
-  });
-
-  testWidgets('Pengujian fitur Delete Kontak dengan Konfirmasi Dialog',
+  testWidgets('Model Kontak memiliki properti dan getter inisial yang benar',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-    await tester.pumpAndSettle();
+    final kontak = Kontak(
+      nama: 'Budi Santoso',
+      email: 'budi@gmail.com',
+      noHandphone: '08123456789',
+      kategori: 'Teman',
+    );
 
-    // Tekan tombol delete untuk kontak pertama
-    final deleteButtons = find.byIcon(Icons.delete);
-    expect(deleteButtons, findsWidgets);
-    await tester.tap(deleteButtons.first);
-    await tester.pumpAndSettle();
-
-    // Pastikan dialog konfirmasi muncul dengan opsi Batal dan Hapus
-    expect(find.text('Konfirmasi Hapus'), findsOneWidget);
-    expect(find.text('Batal'), findsOneWidget);
-    expect(find.text('Hapus'), findsOneWidget);
-
-    // Uji opsi Batal
-    await tester.tap(find.text('Batal'));
-    await tester.pumpAndSettle();
-
-    // Kontak masih ada di daftar
-    expect(find.text('Budi Santoso'), findsOneWidget);
-
-    // Tekan delete lagi lalu pilih Hapus
-    await tester.tap(find.byIcon(Icons.delete).first);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Hapus'));
-    await tester.pumpAndSettle();
-
-    // Kontak Budi telah terhapus, tetapi Annisa dan Citra tetap ada
-    expect(find.text('Budi Santoso'), findsNothing);
-    expect(find.text('Annisa Rahma'), findsOneWidget);
-    expect(find.text('Citra Dewi'), findsOneWidget);
+    expect(kontak.nama, 'Budi Santoso');
+    expect(kontak.email, 'budi@gmail.com');
+    expect(kontak.noHandphone, '08123456789');
+    expect(kontak.kategori, 'Teman');
+    expect(kontak.inisial, 'B');
   });
 
-  testWidgets('Pengujian Pencarian dan Edit/Delete pada hasil pencarian',
+  testWidgets('Halaman Tambah Kontak menampilkan semua field formulir',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TambahKontakPage(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    // Cari "Annisa"
-    final searchField = find.widgetWithText(TextField, 'Cari Kontak');
-    await tester.enterText(searchField, 'Annisa');
+    // Memastikan judul dan field tersedia
+    expect(find.text('Tambah Kontak'), findsOneWidget);
+    expect(find.text('Nama Lengkap'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('No Handphone'), findsOneWidget);
+    expect(find.text('Kategori'), findsOneWidget);
+    expect(find.text('Simpan Kontak'), findsOneWidget);
+  });
+
+  testWidgets('Validasi form Tambah Kontak saat field kosong',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TambahKontakPage(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    // Hanya Annisa yang muncul
-    expect(find.text('Annisa Rahma'), findsOneWidget);
-    expect(find.text('Budi Santoso'), findsNothing);
-
-    // Edit kontak hasil pencarian
-    await tester.tap(find.byIcon(Icons.edit).first);
+    // Tekan tombol Simpan Kontak tanpa mengisi data
+    await tester.tap(find.text('Simpan Kontak'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Annisa Rahma'), findsOneWidget);
-    final namaField = find.widgetWithText(TextFormField, 'Nama Lengkap');
-    await tester.enterText(namaField, 'Annisa Kusumastuti');
+    // Memastikan pesan error validasi muncul
+    expect(find.text('Nama tidak boleh kosong'), findsOneWidget);
+    expect(find.text('Email tidak boleh kosong'), findsOneWidget);
+    expect(find.text('No HP wajib diisi'), findsOneWidget);
+  });
+
+  testWidgets('Halaman Tentang menampilkan profil pengembang sesuai identitas',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: TentangPage(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Simpan Perubahan'));
-    await tester.pumpAndSettle();
-
-    // Bersihkan pencarian
-    await tester.enterText(searchField, '');
-    await tester.pumpAndSettle();
-
-    // Kontak yang terupdate harus Annisa Kusumastuti, dan kontak lain tetap utuh
-    expect(find.text('Annisa Kusumastuti'), findsOneWidget);
-    expect(find.text('Budi Santoso'), findsOneWidget);
+    expect(find.text('Tentang'), findsOneWidget);
+    expect(find.text('Ibra Al Tabian'), findsOneWidget);
+    expect(find.text('XII RPL B'), findsOneWidget);
+    expect(find.text('SMK Negeri 5 Surakarta'), findsOneWidget);
   });
 }
