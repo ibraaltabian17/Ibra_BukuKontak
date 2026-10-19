@@ -53,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
       email: 'budi@gmail.com',
       noHandphone: '081234567890',
       kategori: 'Teman',
+      isFavorit: false,
     ),
     Kontak(
       id: 'kontak_2',
@@ -60,6 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
       email: 'annisa@gmail.com',
       noHandphone: '089876543210',
       kategori: 'Keluarga',
+      isFavorit: true,
     ),
     Kontak(
       id: 'kontak_3',
@@ -67,6 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
       email: 'citra@gmail.com',
       noHandphone: '082134567891',
       kategori: 'Kerja',
+      isFavorit: false,
     ),
   ];
 
@@ -121,9 +124,9 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
       _searchController.add(_currentQuery);
-      DefaultTabController.of(context).animateTo(0);
 
       if (mounted) {
+        DefaultTabController.of(context).animateTo(0);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Kontak "${hasil.nama}" berhasil ditambahkan'),
@@ -155,6 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
             'email': hasil.email,
             'noHandphone': hasil.noHandphone,
             'kategori': hasil.kategori,
+            'isFavorit': hasil.isFavorit,
           });
         } catch (e) {
           debugPrint('Gagal memperbarui di Firestore: $e');
@@ -178,6 +182,39 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         );
       }
+    }
+  }
+
+  // FUNGSI UNTUK MENGUBAH STATUS FAVORIT KONTAK
+  Future<void> toggleFavorit(Kontak kontak) async {
+    final bool newStatus = !kontak.isFavorit;
+    if (_isFirebaseActive && kontak.id.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('kontak')
+            .doc(kontak.id)
+            .update({'isFavorit': newStatus});
+      } catch (e) {
+        debugPrint('Gagal mengubah status favorit di Firestore: $e');
+      }
+    } else {
+      setState(() {
+        kontak.isFavorit = newStatus;
+      });
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus
+                ? 'Kontak "${kontak.nama}" ditambahkan ke Favorit'
+                : 'Kontak "${kontak.nama}" dihapus dari Favorit',
+          ),
+          backgroundColor: newStatus ? Colors.amber[800] : Colors.grey[700],
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -339,14 +376,7 @@ class _MyHomePageState extends State<MyHomePage> {
           daftarKontak(),
 
           // TAB FAVORIT
-          const ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Dhani Arrgiawan Widiyatmoko'),
-            subtitle: Text(
-              'dhani@gmail.com\n'
-              '0812345678901',
-            ),
-          ),
+          daftarFavorit(),
         ],
       ),
 
@@ -449,6 +479,19 @@ class _MyHomePageState extends State<MyHomePage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // TOMBOL FAVORIT
+                          IconButton(
+                            icon: Icon(
+                              kontak.isFavorit ? Icons.star : Icons.star_border,
+                              color: kontak.isFavorit ? Colors.amber : Colors.grey,
+                            ),
+                            tooltip: kontak.isFavorit
+                                ? 'Hapus dari Favorit'
+                                : 'Tambah ke Favorit',
+                            onPressed: () {
+                              toggleFavorit(kontak);
+                            },
+                          ),
                           // TOMBOL EDIT
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
@@ -475,6 +518,102 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ],
+    );
+  }
+
+  // WIDGET DAFTAR KONTAK FAVORIT
+  Widget daftarFavorit() {
+    return StreamBuilder<List<Kontak>>(
+      stream: _getKontakStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final contactList =
+            snapshot.data ?? (_isFirebaseActive ? [] : items);
+        final favoriteList =
+            contactList.where((kontak) => kontak.isFavorit).toList();
+
+        if (favoriteList.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star_border, size: 64, color: Colors.grey),
+                SizedBox(height: 12),
+                Text(
+                  'Belum ada kontak favorit',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Ketuk ikon bintang pada kontak untuk menambahkannya ke sini.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: favoriteList.length,
+          itemBuilder: (context, index) {
+            final kontak = favoriteList[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(
+                horizontal: 10.0,
+                vertical: 4.0,
+              ),
+              elevation: 1.5,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.white,
+                  child: Text(kontak.inisial),
+                ),
+                title: Text(
+                  kontak.nama,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '${kontak.email}\n'
+                  '${kontak.noHandphone}\n'
+                  'Kategori: ${kontak.kategori ?? 'Tanpa kategori'}',
+                ),
+                isThreeLine: true,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // TOMBOL HAPUS DARI FAVORIT
+                    IconButton(
+                      icon: const Icon(Icons.star, color: Colors.amber),
+                      tooltip: 'Hapus dari Favorit',
+                      onPressed: () {
+                        toggleFavorit(kontak);
+                      },
+                    ),
+                    // TOMBOL EDIT
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      tooltip: 'Edit Kontak',
+                      onPressed: () {
+                        editKontak(kontak);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -684,6 +823,7 @@ class _EditKontakPageState extends State<EditKontakPage> {
       kategori: kategoriController.text.trim().isEmpty
           ? null
           : kategoriController.text.trim(),
+      isFavorit: widget.kontak.isFavorit,
     );
 
     // Mengirim data kontak yang telah diperbarui kembali ke halaman sebelumnya
@@ -821,7 +961,7 @@ class TentangPage extends StatelessWidget {
       ),
       body: const Center(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(20),
           child: Center(
             child: Column(
               children: [
@@ -861,6 +1001,7 @@ class Kontak {
   String email;
   String noHandphone;
   String? kategori;
+  bool isFavorit;
 
   Kontak({
     String? id,
@@ -868,6 +1009,7 @@ class Kontak {
     required this.email,
     required this.noHandphone,
     this.kategori,
+    this.isFavorit = false,
   }) : id = id ??
             'kontak_${++_counter}_${DateTime.now().microsecondsSinceEpoch}';
 
@@ -879,6 +1021,7 @@ class Kontak {
       'email': email,
       'noHandphone': noHandphone,
       'kategori': kategori,
+      'isFavorit': isFavorit,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -891,6 +1034,7 @@ class Kontak {
       email: data['email']?.toString() ?? '',
       noHandphone: data['noHandphone']?.toString() ?? '',
       kategori: data['kategori']?.toString(),
+      isFavorit: data['isFavorit'] == true,
     );
   }
 
@@ -901,6 +1045,7 @@ class Kontak {
       email: data['email']?.toString() ?? '',
       noHandphone: data['noHandphone']?.toString() ?? '',
       kategori: data['kategori']?.toString(),
+      isFavorit: data['isFavorit'] == true,
     );
   }
 }
